@@ -14,7 +14,7 @@ from pysql_test import get_connections, seed
 def db():
     """
     Create an isolated test database with sample schema.
-    
+
     Each test gets a fresh database that is automatically
     cleaned up after the test completes.
     """
