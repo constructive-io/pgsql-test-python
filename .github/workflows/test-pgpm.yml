@@ -1,4 +1,4 @@
-name: pysql-test CI
+name: pgpm Integration Tests
 
 on:
   push:
@@ -12,11 +12,14 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-run-tests
+  group: ${{ github.workflow }}-${{ github.ref }}-pgpm-tests
   cancel-in-progress: true
 
+env:
+  PGPM_VERSION: '2.7.9'
+
 jobs:
-  test:
+  test-pgpm:
     runs-on: ubuntu-latest
 
     env:
@@ -43,6 +46,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache pgpm CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: pgpm-${{ runner.os }}-${{ env.PGPM_VERSION }}
+
+      - name: Install pgpm CLI globally
+        run: npm install -g pgpm@${{ env.PGPM_VERSION }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -55,14 +72,18 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: poetry install
 
-      - name: Run linting
-        run: poetry run ruff check .
+      - name: Install @pgpm/faker in test fixture
+        run: |
+          cd tests/fixtures/pgpm-workspace/packages/test-module
+          pgpm install @pgpm/faker
 
-      - name: Run type checking
-        run: poetry run mypy src --ignore-missing-imports
+      - name: Seed pg and app_user
+        run: |
+          pgpm admin-users bootstrap --yes
+          pgpm admin-users add --test --yes
 
-      - name: Run tests
-        run: poetry run pytest -v --ignore=tests/test_pgpm_integration.py
+      - name: Run pgpm integration tests
+        run: poetry run pytest tests/test_pgpm_integration.py -v -s --log-cli-level=INFO

@@ -1,0 +1,7 @@
+# test-module extension
+comment = 'test-module extension for pysql-test'
+default_version = '0.0.1'
+module_pathname = '$libdir/test-module'
+requires = 'plpgsql'
+relocatable = false
+superuser = false

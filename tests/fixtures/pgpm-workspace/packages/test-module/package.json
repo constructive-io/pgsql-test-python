@@ -1,0 +1,7 @@
+{
+  "name": "test-module",
+  "version": "0.0.1",
+  "description": "Test module for pysql-test pgpm integration",
+  "author": "pysql-test",
+  "license": "MIT"
+}
