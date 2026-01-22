@@ -640,5 +640,5 @@ def db():
 
 ## Next Steps
 
-- Read the [pgsql-test README](./README.md) for API documentation
+- Read the [pgsql-test README](https://github.com/constructive-io/pgsql-test-python/blob/main/README.md) for API documentation
 - Explore [pgpm documentation](https://pgpm.io) for advanced features
