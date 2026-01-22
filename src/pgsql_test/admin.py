@@ -13,7 +13,7 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-from pysql_test.types import PgConfig
+from pgsql_test.types import PgConfig
 
 logger = logging.getLogger(__name__)
 

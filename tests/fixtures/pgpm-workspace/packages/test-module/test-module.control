@@ -1,5 +1,5 @@
 # test-module extension
-comment = 'test-module extension for pysql-test'
+comment = 'test-module extension for pgsql-test'
 default_version = '0.0.1'
 module_pathname = '$libdir/test-module'
 requires = 'plpgsql'

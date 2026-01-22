@@ -1,5 +1,5 @@
 """
-Seed adapters for pysql-test.
+Seed adapters for pgsql-test.
 
 Provides composable seeding strategies for test databases:
 - sqlfile: Execute raw SQL files
@@ -8,9 +8,9 @@ Provides composable seeding strategies for test databases:
 - pgpm: Run pgpm migrations (requires pgpm CLI)
 """
 
-from pysql_test.seed.adapters import compose, fn
-from pysql_test.seed.pgpm import pgpm
-from pysql_test.seed.sql import sqlfile
+from pgsql_test.seed.adapters import compose, fn
+from pgsql_test.seed.pgpm import pgpm
+from pgsql_test.seed.sql import sqlfile
 
 __all__ = [
     "sqlfile",

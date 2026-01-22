@@ -2,4 +2,4 @@
 %project=test-module
 %uri=test-module
 
-schemas/test_app 2026-01-22T00:00:00Z pysql-test <test@pysql-test.dev> # add test_app schema
+schemas/test_app 2026-01-22T00:00:00Z pgsql-test <test@pgsql-test.dev> # add test_app schema

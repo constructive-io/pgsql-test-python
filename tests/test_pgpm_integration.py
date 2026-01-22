@@ -1,5 +1,5 @@
 """
-pgpm integration tests for pysql-test.
+pgpm integration tests for pgsql-test.
 
 These tests demonstrate using seed.pgpm() to run pgpm migrations
 as part of test database seeding.
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from pysql_test import get_connections, seed
+from pgsql_test import get_connections, seed
 
 # Path to the pre-scaffolded pgpm workspace fixture
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "pgpm-workspace" / "packages" / "test-module"
@@ -75,7 +75,7 @@ def test_pgpm_faker_city_function(pgpm_db):
     Test that faker.city() function works.
 
     This demonstrates the full pgpm integration flow:
-    1. pysql-test creates isolated database
+    1. pgsql-test creates isolated database
     2. seed.pgpm() runs pgpm deploy
     3. pgpm deploys test-module + @pgpm/faker dependency
     4. Test can use faker functions

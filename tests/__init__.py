@@ -1,1 +1,1 @@
-"""Tests for pysql-test."""
+"""Tests for pgsql-test."""

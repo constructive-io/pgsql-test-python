@@ -1,5 +1,5 @@
 """
-pgpm seed adapter for pysql-test.
+pgpm seed adapter for pgsql-test.
 
 Provides integration with pgpm (PostgreSQL Package Manager) for running
 database migrations as part of test seeding.
@@ -15,7 +15,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pysql_test.types import SeedContext
+    from pgsql_test.types import SeedContext
 
 logger = logging.getLogger(__name__)
 

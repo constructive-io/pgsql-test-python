@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pysql_test.types import SeedContext
+    from pgsql_test.types import SeedContext
 
 logger = logging.getLogger(__name__)
 

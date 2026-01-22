@@ -1,5 +1,5 @@
 """
-Simple example test demonstrating pysql-test usage.
+Simple example test demonstrating pgsql-test usage.
 
 This is a minimal example showing how to use the testing framework
 for PostgreSQL integration tests with automatic database isolation.
@@ -7,7 +7,7 @@ for PostgreSQL integration tests with automatic database isolation.
 
 import pytest
 
-from pysql_test import get_connections, seed
+from pgsql_test import get_connections, seed
 
 
 @pytest.fixture

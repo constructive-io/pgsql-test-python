@@ -1,5 +1,5 @@
 """
-Basic tests for pysql-test framework.
+Basic tests for pgsql-test framework.
 
 These tests verify the core functionality of the testing framework itself.
 """
@@ -7,9 +7,9 @@ These tests verify the core functionality of the testing framework itself.
 
 import pytest
 
-from pysql_test import get_connections, seed
-from pysql_test.admin import DbAdmin
-from pysql_test.manager import generate_test_db_name
+from pgsql_test import get_connections, seed
+from pgsql_test.admin import DbAdmin
+from pgsql_test.manager import generate_test_db_name
 
 
 class TestGetConnections:
@@ -27,8 +27,8 @@ class TestGetConnections:
 
             # Verify the database name is unique (contains UUID)
             db_name = conn.pg.config.get("database", "")
-            assert db_name.startswith("pysql_test_")
-            assert len(db_name) > len("pysql_test_")
+            assert db_name.startswith("pgsql_test_")
+            assert len(db_name) > len("pgsql_test_")
         finally:
             conn.teardown()
 
@@ -264,7 +264,7 @@ class TestDbAdmin:
     def test_create_and_drop_database(self, pg_config):
         """Test creating and dropping a database."""
         admin = DbAdmin(pg_config)
-        test_db = f"pysql_admin_test_{generate_test_db_name('')}"
+        test_db = f"pgsql_admin_test_{generate_test_db_name('')}"
 
         try:
             # Create
@@ -290,7 +290,7 @@ class TestDbAdmin:
             admin.install_extensions(["uuid-ossp"], test_db)
 
             # Verify extension is installed by connecting to the DB
-            from pysql_test.client import PgTestClient
+            from pgsql_test.client import PgTestClient
             client_config = {**pg_config, "database": test_db}
             client = PgTestClient(client_config)
             client.connect()
@@ -322,4 +322,4 @@ class TestGenerateTestDbName:
     def test_default_prefix(self):
         """Test the default prefix."""
         name = generate_test_db_name()
-        assert name.startswith("pysql_test_")
+        assert name.startswith("pgsql_test_")

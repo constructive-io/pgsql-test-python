@@ -1,7 +1,7 @@
 """
-Pytest configuration and fixtures for pysql-test.
+Pytest configuration and fixtures for pgsql-test.
 
-This module provides reusable fixtures for testing the pysql-test framework itself.
+This module provides reusable fixtures for testing the pgsql-test framework itself.
 """
 
 import os
@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from pysql_test import get_connections
-from pysql_test.types import PgConfig
+from pgsql_test import get_connections
+from pgsql_test.types import PgConfig
 
 
 def get_test_pg_config() -> PgConfig:

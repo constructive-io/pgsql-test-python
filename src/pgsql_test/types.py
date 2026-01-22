@@ -1,4 +1,4 @@
-"""Type definitions for pysql-test."""
+"""Type definitions for pgsql-test."""
 
 from dataclasses import dataclass
 from typing import Any, Protocol, TypedDict
