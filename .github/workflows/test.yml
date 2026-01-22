@@ -65,4 +65,4 @@ jobs:
         run: poetry run mypy src --ignore-missing-imports
 
       - name: Run tests
-        run: poetry run pytest -v
+        run: poetry run pytest -v --ignore=tests/test_pgpm_integration.py

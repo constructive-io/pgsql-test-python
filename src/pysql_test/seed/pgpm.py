@@ -75,7 +75,7 @@ class PgpmSeedAdapter:
         cwd = self._module_path or os.getcwd()
 
         # Build pgpm deploy command
-        cmd = ["pgpm", "deploy", "--yes"]
+        cmd = ["pgpm", "deploy", "--yes", "--verbose"]
         cmd.extend(self._deploy_args)
 
         logger.info(f"Running pgpm deploy in {cwd}")
@@ -99,7 +99,9 @@ class PgpmSeedAdapter:
 
             logger.info("pgpm deploy completed successfully")
             if result.stdout:
-                logger.debug(f"pgpm output: {result.stdout}")
+                logger.info(f"pgpm output: {result.stdout}")
+            if result.stderr:
+                logger.info(f"pgpm stderr: {result.stderr}")
 
         except FileNotFoundError as err:
             raise RuntimeError(
