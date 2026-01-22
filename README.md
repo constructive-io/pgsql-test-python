@@ -1,15 +1,28 @@
 # pgsql-test
 
-PostgreSQL testing framework for Python - instant, isolated databases with automatic transaction rollback. The Python companion to [pgsql-test](https://github.com/launchql/pgsql-test) for TypeScript/Node.js.
+<p align="center" width="100%">
+  <img height="250" src="https://raw.githubusercontent.com/constructive-io/constructive/refs/heads/main/assets/outline-logo.svg" />
+</p>
+
+<p align="center" width="100%">
+  <a href="https://github.com/constructive-io/pgsql-test-python/actions/workflows/test.yml">
+    <img height="20" src="https://github.com/constructive-io/pgsql-test-python/actions/workflows/test.yml/badge.svg" />
+  </a>
+  <a href="https://github.com/constructive-io/pgsql-test-python/blob/main/LICENSE">
+    <img height="20" src="https://img.shields.io/badge/license-MIT-blue.svg"/>
+  </a>
+</p>
+
+`pgsql-test` gives you instant, isolated PostgreSQL databases for each test — with automatic transaction rollbacks, context switching, and clean seeding. The Python companion to [pgsql-test](https://github.com/launchql/pgsql-test) for TypeScript/Node.js.
 
 ## Features
 
-- **Instant isolated databases**: Each test gets a fresh database with a unique UUID name
-- **Transaction rollback**: Changes are automatically rolled back after each test
-- **pgpm integration**: Run database migrations using [pgpm](https://github.com/pgpm-io/pgpm) (PostgreSQL Package Manager)
-- **Composable seeding**: Seed your database with SQL files, custom functions, pgpm modules, or combine multiple strategies
-- **RLS testing support**: Easy context switching for testing Row Level Security policies
-- **Clean API**: Simple, intuitive interface inspired by the Node.js pgsql-test library
+* **Instant test DBs** — each one seeded, isolated, and UUID-named
+* **Per-test rollback** — every test runs in its own transaction with savepoint-based rollback via `before_each()`/`after_each()`
+* **RLS-friendly** — test with role-based auth via `set_context()`
+* **pgpm integration** — run database migrations using [pgpm](https://github.com/pgpm-io/pgpm) (PostgreSQL Package Manager)
+* **Flexible seeding** — run `.sql` files, programmatic seeds, pgpm modules, or combine multiple strategies
+* **Auto teardown** — no residue, no reboots, just clean exits
 
 ## Installation
 
@@ -156,9 +169,18 @@ def test_with_seeding(seeded_db):
     assert len(users) > 0
 ```
 
-## Transaction Isolation
+## Per-Test Rollback
 
-Use `before_each()` and `after_each()` for per-test isolation:
+The `before_each()` and `after_each()` methods provide automatic transaction rollback for each test. This ensures complete isolation between tests - any changes made during a test are automatically rolled back, so each test starts with a clean slate.
+
+### How It Works
+
+1. `before_each()` begins a transaction and creates a savepoint
+2. Your test runs and makes changes to the database
+3. `after_each()` rolls back to the savepoint, undoing all changes
+4. The next test starts fresh with only the seeded data
+
+### Basic Pattern
 
 ```python
 @pytest.fixture
@@ -183,6 +205,15 @@ def test_user_count(db):
     result = db.one("SELECT COUNT(*) as count FROM users")
     assert result['count'] == 0  # Only seeded data
 ```
+
+### Why This Matters
+
+Without per-test rollback, tests can interfere with each other:
+- Test A inserts a user
+- Test B expects 0 users but finds 1
+- Tests become order-dependent and flaky
+
+With `before_each()`/`after_each()`, each test is completely isolated, making your test suite reliable and deterministic.
 
 ## RLS Testing
 
