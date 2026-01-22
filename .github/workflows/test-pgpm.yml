@@ -86,4 +86,4 @@ jobs:
           pgpm admin-users add --test --yes
 
       - name: Run pgpm integration tests
-        run: poetry run pytest tests/test_pgpm_integration.py -v
+        run: poetry run pytest tests/test_pgpm_integration.py -v -s --log-cli-level=INFO
