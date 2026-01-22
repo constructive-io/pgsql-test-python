@@ -11,9 +11,12 @@
   <a href="https://github.com/constructive-io/pgsql-test-python/blob/main/LICENSE">
     <img height="20" src="https://img.shields.io/badge/license-MIT-blue.svg"/>
   </a>
+  <a href="https://www.npmjs.com/package/pgsql-test">
+    <img height="20" src="https://img.shields.io/npm/v/pgsql-test.svg"/>
+  </a>
 </p>
 
-`pgsql-test` gives you instant, isolated PostgreSQL databases for each test — with automatic transaction rollbacks, context switching, and clean seeding. The Python companion to [pgsql-test](https://github.com/launchql/pgsql-test) for TypeScript/Node.js.
+The Python counterpart to [`pgsql-test`](https://www.npmjs.com/package/pgsql-test) on npm. Instant, isolated PostgreSQL databases for each test — with automatic transaction rollbacks, context switching, and clean seeding.
 
 ## Features
 
