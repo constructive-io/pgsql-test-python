@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pgsql-test"
-version = "0.1.0"
+version = "0.2.0"
 description = "PostgreSQL testing framework for Python - instant, isolated databases with automatic transaction rollback"
 authors = ["Constructive <developers@constructive.io>"]
 license = "MIT"

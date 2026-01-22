@@ -66,7 +66,7 @@ def test_with_fixture(db):
 
 ## pgpm Integration
 
-The primary use case for pgsql-test is testing PostgreSQL modules managed by [pgpm](https://github.com/pgpm-io/pgpm). The `seed.pgpm()` adapter runs `pgpm deploy` to apply your migrations to an isolated test database.
+The primary use case for pgsql-test is testing PostgreSQL modules managed by [pgpm](https://pgpm.io). The `seed.pgpm()` adapter runs `pgpm deploy` to apply your migrations to an isolated test database.
 
 ### Prerequisites
 
@@ -398,9 +398,19 @@ poetry run mypy src
 
 ## Related Projects
 
-- [pgsql-test](https://github.com/launchql/pgsql-test) - The original TypeScript/Node.js version
-- [pgpm](https://github.com/pgpm-io/pgpm) - PostgreSQL Package Manager
+- [pgsql-test](https://www.npmjs.com/package/pgsql-test) - The original TypeScript/Node.js version
+- [pgpm](https://pgpm.io) - PostgreSQL Package Manager
 
 ## License
 
 MIT
+
+## Credits
+
+**🛠 Built by the [Constructive](https://constructive.io) team — creators of modular Postgres tooling for secure, composable backends. If you like our work, contribute on [GitHub](https://github.com/constructive-io).**
+
+## Disclaimer
+
+AS DESCRIBED IN THE LICENSES, THE SOFTWARE IS PROVIDED "AS IS", AT YOUR OWN RISK, AND WITHOUT WARRANTIES OF ANY KIND.
+
+No developer or entity involved in creating this software will be liable for any claims or damages whatsoever associated with your use, inability to use, or your interaction with other users of the code, including any direct, indirect, incidental, special, exemplary, punitive or consequential damages, or loss of profits, cryptocurrencies, tokens, or anything else of value.
