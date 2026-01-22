@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "pysql-test"
+name = "pgsql-test"
 version = "0.1.0"
 description = "PostgreSQL testing framework for Python - instant, isolated databases with automatic transaction rollback"
 authors = ["Constructive <developers@constructive.io>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/constructive-io/pysql"
-repository = "https://github.com/constructive-io/pysql"
+homepage = "https://github.com/constructive-io/pgsql-test-python"
+repository = "https://github.com/constructive-io/pgsql-test-python"
 keywords = ["postgres", "postgresql", "testing", "pytest", "database", "integration-tests"]
 classifiers = [
     "Development Status :: 4 - Beta",

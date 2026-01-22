@@ -1,12 +1,13 @@
-# pysql-test
+# pgsql-test
 
-PostgreSQL testing framework for Python - instant, isolated databases with automatic transaction rollback.
+PostgreSQL testing framework for Python - instant, isolated databases with automatic transaction rollback. The Python companion to [pgsql-test](https://github.com/launchql/pgsql-test) for TypeScript/Node.js.
 
 ## Features
 
 - **Instant isolated databases**: Each test gets a fresh database with a unique UUID name
 - **Transaction rollback**: Changes are automatically rolled back after each test
-- **Composable seeding**: Seed your database with SQL files, custom functions, or combine multiple strategies
+- **pgpm integration**: Run database migrations using [pgpm](https://github.com/pgpm-io/pgpm) (PostgreSQL Package Manager)
+- **Composable seeding**: Seed your database with SQL files, custom functions, pgpm modules, or combine multiple strategies
 - **RLS testing support**: Easy context switching for testing Row Level Security policies
 - **Clean API**: Simple, intuitive interface inspired by the Node.js pgsql-test library
 
@@ -14,17 +15,17 @@ PostgreSQL testing framework for Python - instant, isolated databases with autom
 
 ```bash
 # Using Poetry (recommended)
-poetry add pysql-test
+poetry add pgsql-test
 
 # Using pip
-pip install pysql-test
+pip install pgsql-test
 ```
 
 ## Quick Start
 
 ```python
 import pytest
-from pysql_test import get_connections, seed
+from pgsql_test import get_connections, seed
 
 # Basic usage
 def test_basic_query():
@@ -43,8 +44,105 @@ def db():
 def test_with_fixture(db):
     result = db.query('SELECT 1 as value')
     assert result.rows[0]['value'] == 1
+```
 
-# With SQL file seeding
+## pgpm Integration
+
+The primary use case for pgsql-test is testing PostgreSQL modules managed by [pgpm](https://github.com/pgpm-io/pgpm). The `seed.pgpm()` adapter runs `pgpm deploy` to apply your migrations to an isolated test database.
+
+### Prerequisites
+
+Install pgpm globally:
+
+```bash
+npm install -g pgpm
+```
+
+### Basic pgpm Usage
+
+```python
+import pytest
+from pgsql_test import get_connections, seed
+
+@pytest.fixture
+def db():
+    conn = get_connections(
+        seed_adapters=[
+            seed.pgpm(
+                module_path="./packages/my-module",
+                package="my-module"
+            )
+        ]
+    )
+    db = conn.db
+    db.before_each()
+    yield db
+    db.after_each()
+    conn.teardown()
+
+def test_my_function(db):
+    # Your pgpm module's functions are now available
+    result = db.one("SELECT my_schema.my_function() as result")
+    assert result['result'] == expected_value
+```
+
+### pgpm with Dependencies
+
+If your module depends on other pgpm packages (like `@pgpm/faker`), install them first:
+
+```bash
+cd packages/my-module
+pgpm install @pgpm/faker
+```
+
+Then test:
+
+```python
+def test_faker_integration(db):
+    # @pgpm/faker functions are available after pgpm deploy
+    result = db.one("SELECT faker.city('MI') as city")
+    assert result['city'] is not None
+```
+
+### pgpm Workspace Structure
+
+A typical pgpm workspace for testing looks like:
+
+```
+my-workspace/
+  pgpm.json                    # Workspace config
+  packages/
+    my-module/
+      package.json             # Module metadata
+      my-module.control        # PostgreSQL extension control
+      pgpm.plan                # Migration plan
+      deploy/
+        schemas/
+          my_schema.sql        # CREATE SCHEMA my_schema;
+        functions/
+          my_function.sql      # CREATE FUNCTION ...
+      revert/
+        schemas/
+          my_schema.sql        # DROP SCHEMA my_schema;
+      verify/
+        schemas/
+          my_schema.sql        # SELECT 1 FROM ...
+```
+
+### seed.pgpm() Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `module_path` | `str` | Path to the pgpm module directory |
+| `package` | `str` | Package name to deploy (required to avoid interactive prompts) |
+| `deploy_args` | `list[str]` | Additional arguments to pass to `pgpm deploy` |
+| `cache` | `bool` | Enable caching (not yet implemented) |
+
+## SQL File Seeding
+
+For simpler use cases without pgpm, seed directly from SQL files:
+
+```python
 @pytest.fixture
 def seeded_db():
     conn = get_connections(
@@ -105,6 +203,12 @@ def test_rls_policy(db):
 
 ## Seeding Strategies
 
+### pgpm Modules
+
+```python
+seed.pgpm(module_path="./packages/my-module", package="my-module")
+```
+
 ### SQL Files
 
 ```python
@@ -123,7 +227,8 @@ seed.fn(lambda ctx: ctx['pg'].execute(
 
 ```python
 seed.compose([
-    seed.sqlfile(['schema.sql']),
+    seed.pgpm(module_path="./packages/my-module", package="my-module"),
+    seed.sqlfile(['fixtures.sql']),
     seed.fn(lambda ctx: ctx['pg'].execute("INSERT INTO ...")),
 ])
 ```
@@ -177,6 +282,68 @@ Returns a `ConnectionResult` with:
 - `after_each()`: End test isolation (rollback)
 - `set_context(dict)`: Set session variables for RLS testing
 
+## GitHub Actions Example
+
+Here's a complete CI workflow for testing pgpm modules:
+
+```yaml
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: password
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pgpm
+        run: npm install -g pgpm
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      
+      - name: Install dependencies
+        run: poetry install
+      
+      - name: Bootstrap pgpm roles
+        run: |
+          pgpm admin-users bootstrap --yes
+          pgpm admin-users add --test --yes
+      
+      - name: Run tests
+        run: poetry run pytest -v
+```
+
 ## Development
 
 ```bash
@@ -192,6 +359,11 @@ poetry run ruff check .
 # Run type checking
 poetry run mypy src
 ```
+
+## Related Projects
+
+- [pgsql-test](https://github.com/launchql/pgsql-test) - The original TypeScript/Node.js version
+- [pgpm](https://github.com/pgpm-io/pgpm) - PostgreSQL Package Manager
 
 ## License
 
