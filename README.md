@@ -23,7 +23,7 @@ The Python counterpart to [`pgsql-test`](https://www.npmjs.com/package/pgsql-tes
 * **Instant test DBs** — each one seeded, isolated, and UUID-named
 * **Per-test rollback** — every test runs in its own transaction with savepoint-based rollback via `before_each()`/`after_each()`
 * **RLS-friendly** — test with role-based auth via `set_context()`
-* **pgpm integration** — run database migrations using [pgpm](https://github.com/pgpm-io/pgpm) (PostgreSQL Package Manager)
+* **pgpm integration** — run database migrations using [pgpm](https://pgpm.io) (PostgreSQL Package Manager)
 * **Flexible seeding** — run `.sql` files, programmatic seeds, pgpm modules, or combine multiple strategies
 * **Auto teardown** — no residue, no reboots, just clean exits
 
