@@ -17,6 +17,7 @@ from pysql_test import get_connections, seed
 
 # Path to the pre-scaffolded pgpm workspace fixture
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "pgpm-workspace" / "packages" / "test-module"
+PACKAGE_NAME = "test-module"
 
 
 @pytest.fixture
@@ -29,7 +30,7 @@ def pgpm_db():
     """
     conn = get_connections(
         seed_adapters=[
-            seed.pgpm(module_path=str(FIXTURE_PATH))
+            seed.pgpm(module_path=str(FIXTURE_PATH), package=PACKAGE_NAME)
         ]
     )
     db = conn.db

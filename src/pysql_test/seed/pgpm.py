@@ -35,6 +35,7 @@ class PgpmSeedAdapter:
     def __init__(
         self,
         module_path: str | None = None,
+        package: str | None = None,
         deploy_args: list[str] | None = None,
         cache: bool = False,
     ) -> None:
@@ -43,10 +44,12 @@ class PgpmSeedAdapter:
 
         Args:
             module_path: Path to the pgpm module directory (defaults to cwd)
+            package: Package name to deploy (avoids interactive prompt)
             deploy_args: Additional arguments to pass to pgpm deploy
             cache: Whether to enable caching (not yet implemented)
         """
         self._module_path = module_path
+        self._package = package
         self._deploy_args = deploy_args or []
         self._cache = cache
 
@@ -76,6 +79,8 @@ class PgpmSeedAdapter:
 
         # Build pgpm deploy command
         cmd = ["pgpm", "deploy", "--yes", "--verbose"]
+        if self._package:
+            cmd.extend(["--package", self._package])
         cmd.extend(self._deploy_args)
 
         logger.info(f"Running pgpm deploy in {cwd}")
@@ -111,6 +116,7 @@ class PgpmSeedAdapter:
 
 def pgpm(
     module_path: str | None = None,
+    package: str | None = None,
     deploy_args: list[str] | None = None,
     cache: bool = False,
 ) -> PgpmSeedAdapter:
@@ -122,6 +128,7 @@ def pgpm(
 
     Args:
         module_path: Path to the pgpm module directory (defaults to cwd)
+        package: Package name to deploy (avoids interactive prompt)
         deploy_args: Additional arguments to pass to pgpm deploy
         cache: Whether to enable caching
 
@@ -131,12 +138,12 @@ def pgpm(
     Example:
         # Deploy migrations from a specific module
         seed_adapters = [
-            seed.pgpm(module_path="./packages/my-module")
+            seed.pgpm(module_path="./packages/my-module", package="my-module")
         ]
 
         # Deploy with additional arguments
         seed_adapters = [
-            seed.pgpm(module_path="./my-module", deploy_args=["--verbose"])
+            seed.pgpm(module_path="./my-module", package="my-module", deploy_args=["--verbose"])
         ]
     """
-    return PgpmSeedAdapter(module_path=module_path, deploy_args=deploy_args, cache=cache)
+    return PgpmSeedAdapter(module_path=module_path, package=package, deploy_args=deploy_args, cache=cache)
