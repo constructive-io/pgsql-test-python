@@ -18,6 +18,8 @@
 
 The Python counterpart to [`pgsql-test`](https://www.npmjs.com/package/pgsql-test) on npm. Instant, isolated PostgreSQL databases for each test — with automatic transaction rollbacks, context switching, and clean seeding.
 
+> **New to pgpm?** Check out the [Workspace Setup Guide](./WORKSPACE_SETUP.md) for a complete walkthrough of creating a pgpm workspace with Python tests.
+
 ## Features
 
 * **Instant test DBs** — each one seeded, isolated, and UUID-named
