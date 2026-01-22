@@ -1,4 +1,4 @@
-name: pysql-test CI
+name: pgsql-test CI
 
 on:
   push:

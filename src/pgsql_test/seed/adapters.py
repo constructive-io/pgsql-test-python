@@ -1,5 +1,5 @@
 """
-Generic seed adapters for pysql-test.
+Generic seed adapters for pgsql-test.
 
 Provides composable seeding utilities:
 - fn: Run custom Python functions
@@ -13,7 +13,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pysql_test.types import SeedContext
+    from pgsql_test.types import SeedContext
 
 logger = logging.getLogger(__name__)
 

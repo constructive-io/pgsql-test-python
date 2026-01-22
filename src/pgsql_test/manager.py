@@ -13,9 +13,9 @@ import signal
 import uuid
 from typing import Any
 
-from pysql_test.admin import DbAdmin
-from pysql_test.client import PgTestClient
-from pysql_test.types import PgConfig
+from pgsql_test.admin import DbAdmin
+from pgsql_test.client import PgTestClient
+from pgsql_test.types import PgConfig
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +206,7 @@ class PgTestConnector:
         self.drop(client.config)
 
 
-def generate_test_db_name(prefix: str = "pysql_test_") -> str:
+def generate_test_db_name(prefix: str = "pgsql_test_") -> str:
     """
     Generate a unique test database name.
 
@@ -214,6 +214,6 @@ def generate_test_db_name(prefix: str = "pysql_test_") -> str:
         prefix: Prefix for the database name
 
     Returns:
-        A unique database name like "pysql_test_abc123..."
+        A unique database name like "pgsql_test_abc123..."
     """
     return f"{prefix}{uuid.uuid4().hex[:12]}"

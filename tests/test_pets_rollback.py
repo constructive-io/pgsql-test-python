@@ -10,7 +10,7 @@ Key concept: before_each() creates a savepoint, after_each() rolls back to it.
 
 import pytest
 
-from pysql_test import get_connections, seed
+from pgsql_test import get_connections, seed
 
 
 @pytest.fixture

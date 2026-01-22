@@ -1,5 +1,5 @@
 """
-Connection management for pysql-test.
+Connection management for pgsql-test.
 
 Provides the main entry point for setting up test database connections.
 """
@@ -12,10 +12,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from pysql_test.admin import DbAdmin
-from pysql_test.client import PgTestClient
-from pysql_test.manager import PgTestConnector, generate_test_db_name
-from pysql_test.types import ConnectionOptions, PgConfig, SeedContext
+from pgsql_test.admin import DbAdmin
+from pgsql_test.client import PgTestClient
+from pgsql_test.manager import PgTestConnector, generate_test_db_name
+from pgsql_test.types import ConnectionOptions, PgConfig, SeedContext
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ def get_connections(
     """
     Set up a fresh PostgreSQL test database and return connection objects.
 
-    This is the main entry point for pysql-test. It:
+    This is the main entry point for pgsql-test. It:
     1. Creates a new isolated database with a UUID name
     2. Installs any requested extensions
     3. Runs seed adapters to populate the database
@@ -98,7 +98,7 @@ def get_connections(
         ConnectionResult with pg, db, admin, manager, and teardown function.
 
     Example:
-        from pysql_test import get_connections, seed
+        from pgsql_test import get_connections, seed
 
         # Basic usage
         conn = get_connections()
@@ -122,7 +122,7 @@ def get_connections(
     options = connection_options or {}
 
     # Generate unique database name
-    prefix = options.get("prefix", "pysql_test_")
+    prefix = options.get("prefix", "pgsql_test_")
     test_db_name = generate_test_db_name(prefix)
 
     # Create admin connection to root database

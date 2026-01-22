@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Database",
     "Topic :: Software Development :: Testing",
 ]
-packages = [{include = "pysql_test", from = "src"}]
+packages = [{include = "pgsql_test", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -58,7 +58,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["pysql_test"]
+known-first-party = ["pgsql_test"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -1,15 +1,15 @@
 """
-pysql-test: PostgreSQL testing framework for Python.
+pgsql-test: PostgreSQL testing framework for Python.
 
 Instant, isolated PostgreSQL databases for each test with automatic
 transaction rollback, context switching, and clean seeding.
 """
 
-from pysql_test import seed
-from pysql_test.admin import DbAdmin
-from pysql_test.client import PgTestClient
-from pysql_test.connect import get_connections
-from pysql_test.manager import PgTestConnector
+from pgsql_test import seed
+from pgsql_test.admin import DbAdmin
+from pgsql_test.client import PgTestClient
+from pgsql_test.connect import get_connections
+from pgsql_test.manager import PgTestConnector
 
 __all__ = [
     "get_connections",

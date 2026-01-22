@@ -1,4 +1,4 @@
--- Test schema for pysql-test
+-- Test schema for pgsql-test
 -- This file is used to test the SQL file seeding functionality
 
 CREATE TABLE IF NOT EXISTS users (

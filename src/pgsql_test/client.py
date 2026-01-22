@@ -13,7 +13,7 @@ from typing import Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from pysql_test.types import PgConfig, QueryResult
+from pgsql_test.types import PgConfig, QueryResult
 
 logger = logging.getLogger(__name__)
 
