@@ -642,4 +642,3 @@ def db():
 
 - Read the [pgsql-test README](./README.md) for API documentation
 - Explore [pgpm documentation](https://pgpm.io) for advanced features
-- Check out [example projects](https://github.com/pgpm-io) for inspiration
