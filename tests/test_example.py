@@ -25,7 +25,8 @@ def db():
                     id SERIAL PRIMARY KEY,
                     name TEXT NOT NULL,
                     email TEXT UNIQUE
-                )
+                );
+                GRANT ALL ON users, users_id_seq TO anonymous;
             """))
         ]
     )

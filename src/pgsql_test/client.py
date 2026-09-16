@@ -11,6 +11,7 @@ import logging
 from typing import Any
 
 import psycopg2
+from psycopg2 import sql as pgsql
 from psycopg2.extras import RealDictCursor
 
 from pgsql_test.types import PgConfig, QueryResult
@@ -39,18 +40,25 @@ class PgTestClient:
         client.close()
     """
 
-    def __init__(self, config: PgConfig, enhanced_errors: bool = True) -> None:
+    def __init__(
+        self,
+        config: PgConfig,
+        enhanced_errors: bool = True,
+        default_role: str | None = None,
+    ) -> None:
         """
         Initialize the test client.
 
         Args:
             config: PostgreSQL connection configuration
             enhanced_errors: Whether to enhance error messages with PG details
+            default_role: Role restored by clear_context() (None = SET ROLE NONE)
         """
         self._config = config
         self._enhanced_errors = enhanced_errors
+        self._default_role = default_role
         self._conn: psycopg2.extensions.connection | None = None
-        self._context: dict[str, str] = {}
+        self._context: dict[str, str | None] = {}
         self._in_transaction = False
         self._savepoint_name = "pgsql_test_savepoint"
 
@@ -111,6 +119,7 @@ class PgTestClient:
         conn = self.connection
         try:
             with conn.cursor() as cur:
+                self._apply_context(cur)
                 cur.execute(sql, params)
                 # Check if this is a SELECT-like query that returns rows
                 if cur.description is not None:
@@ -185,30 +194,40 @@ class PgTestClient:
         result = self.query(sql, params)
         return result.row_count
 
-    def set_context(self, context: dict[str, str]) -> None:
+    def set_context(self, context: dict[str, str | None]) -> None:
         """
-        Set PostgreSQL session context variables.
+        Set PostgreSQL context variables for RLS testing.
 
-        Useful for simulating RLS contexts in tests.
+        The `role` key becomes `SET LOCAL ROLE`; every other key becomes
+        `set_config(key, value, true)`. Both are transaction-local, so the
+        context is re-applied before every query (like the TS client) and
+        therefore persists across the transaction opened by before_each().
+        A value of None resets the setting (`SET LOCAL ROLE NONE` / NULL).
 
         Args:
-            context: Dictionary of context variables to set
-                     e.g., {"role": "authenticated", "jwt.claims.user_id": "123"}
+            context: e.g. {"role": "authenticated", "jwt.claims.user_id": "123"}
         """
         self._context.update(context)
-        self._apply_context()
+
+    def get_context(self) -> dict[str, str | None]:
+        """Return a copy of the current context settings."""
+        return dict(self._context)
 
     def clear_context(self) -> None:
-        """Clear all context variables."""
-        self._context = {}
+        """Null out every context variable and restore the default role."""
+        self._context = {key: None for key in self._context}
+        self._context["role"] = self._default_role
 
-    def _apply_context(self) -> None:
-        """Apply context variables to the current session."""
-        conn = self.connection
-        with conn.cursor() as cur:
-            for key, value in self._context.items():
-                # Use SET LOCAL so it only applies within the current transaction
-                cur.execute(f"SET LOCAL {key} = %s", (value,))
+    def _apply_context(self, cur: Any) -> None:
+        """Apply context variables on the given cursor (transaction-local)."""
+        for key, value in self._context.items():
+            if key == "role":
+                if value is None:
+                    cur.execute("SET LOCAL ROLE NONE")
+                else:
+                    cur.execute(pgsql.SQL("SET LOCAL ROLE {}").format(pgsql.Identifier(value)))
+            else:
+                cur.execute("SELECT set_config(%s, %s, true)", (key, value))
 
     def begin(self) -> None:
         """Begin a new transaction."""
@@ -256,8 +275,6 @@ class PgTestClient:
         """
         self.begin()
         self.savepoint()
-        if self._context:
-            self._apply_context()
 
     def after_each(self) -> None:
         """

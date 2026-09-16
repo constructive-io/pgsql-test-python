@@ -15,7 +15,15 @@ from typing import Any
 from pgsql_test.admin import DbAdmin
 from pgsql_test.client import PgTestClient
 from pgsql_test.manager import PgTestConnector, generate_test_db_name
-from pgsql_test.types import ConnectionOptions, PgConfig, SeedContext
+from pgsql_test.types import (
+    DEFAULT_APP_CONNECTION,
+    DEFAULT_ROLES,
+    AppConnection,
+    ConnectionOptions,
+    PgConfig,
+    RoleMapping,
+    SeedContext,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +128,11 @@ def get_connections(
     # Get configuration
     config = pg_config or get_pg_config_from_env()
     options = connection_options or {}
+    app: AppConnection = {**DEFAULT_APP_CONNECTION, **options.get("connection", {})}
+    roles: RoleMapping = {**DEFAULT_ROLES, **options.get("roles", {})}
+    app_user = app["user"]
+    app_password = app["password"]
+    default_role = app["role"]
 
     # Generate unique database name
     prefix = options.get("prefix", "pgsql_test_")
@@ -137,6 +150,13 @@ def get_connections(
 
     admin = DbAdmin(admin_config, verbose=False)
 
+    # Roles are cluster-wide, so the app user is created once against the root db
+    admin.create_user_role(
+        app_user,
+        app_password,
+        [roles["anonymous"], roles["authenticated"], roles["administrator"]],
+    )
+
     # Create the test database
     template = options.get("template")
     if template:
@@ -148,6 +168,8 @@ def get_connections(
     extensions = options.get("extensions", [])
     if extensions:
         admin.install_extensions(extensions, test_db_name)
+
+    admin.grant_connect(app_user, test_db_name)
 
     # Create configuration for the test database
     test_config: PgConfig = {
@@ -178,10 +200,13 @@ def get_connections(
                 logger.error(f"Seed adapter failed: {e}")
                 # Continue without teardown to allow debugging
                 raise
+        # Seeds run on the non-autocommit pg connection; make them visible to db
+        pg.commit()
 
-    # For now, db is the same as pg (both superuser)
-    # In the future, we can add app-level user support
-    db = pg
+    # The app-level client: a real non-superuser connection so RLS policies apply
+    db_config: PgConfig = {**test_config, "user": app_user, "password": app_password}
+    db = manager.get_client(db_config, default_role=default_role)
+    db.set_context({"role": default_role})
 
     # Create teardown function
     def teardown_fn() -> None:

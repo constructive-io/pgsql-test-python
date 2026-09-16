@@ -33,21 +33,28 @@ def pgpm_db():
             seed.pgpm(module_path=str(FIXTURE_PATH), package=PACKAGE_NAME)
         ]
     )
-    db = conn.db
-    db.before_each()
-    yield db
-    db.after_each()
+    conn.pg.before_each()
+    conn.db.before_each()
+    yield conn
+    conn.db.after_each()
+    conn.pg.after_each()
     conn.teardown()
 
 
 def test_pgpm_creates_schema(pgpm_db):
     """Test that pgpm deploy creates the test_app schema."""
-    result = pgpm_db.one("""
+    result = pgpm_db.pg.one("""
         SELECT schema_name
         FROM information_schema.schemata
         WHERE schema_name = 'test_app'
     """)
     assert result["schema_name"] == "test_app"
+
+
+def test_app_role_can_use_granted_schema(pgpm_db):
+    """The non-superuser db client sees the schema because the migration granted USAGE."""
+    result = pgpm_db.db.one("SELECT has_schema_privilege('test_app', 'USAGE') AS ok")
+    assert result["ok"] is True
 
 
 def test_pgpm_faker_available(pgpm_db):
@@ -58,7 +65,7 @@ def test_pgpm_faker_available(pgpm_db):
     and the faker schema/functions are available.
     """
     # Check if faker schema exists (installed via pgpm install @pgpm/faker)
-    result = pgpm_db.one_or_none("""
+    result = pgpm_db.pg.one_or_none("""
         SELECT schema_name
         FROM information_schema.schemata
         WHERE schema_name = 'faker'
@@ -81,7 +88,7 @@ def test_pgpm_faker_city_function(pgpm_db):
     4. Test can use faker functions
     """
     # Check if faker schema exists first
-    schema_exists = pgpm_db.one_or_none("""
+    schema_exists = pgpm_db.pg.one_or_none("""
         SELECT schema_name
         FROM information_schema.schemata
         WHERE schema_name = 'faker'
@@ -91,7 +98,7 @@ def test_pgpm_faker_city_function(pgpm_db):
         pytest.skip("@pgpm/faker not installed - run: cd tests/fixtures/pgpm-workspace/packages/test-module && pgpm install @pgpm/faker")
 
     # Test faker.city() function with Michigan state code
-    result = pgpm_db.one("SELECT faker.city('MI') as city")
+    result = pgpm_db.pg.one("SELECT faker.city('MI') as city")
     assert result["city"] is not None
     assert isinstance(result["city"], str)
     assert len(result["city"]) > 0

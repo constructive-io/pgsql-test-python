@@ -95,12 +95,13 @@ class PgTestConnector:
         """Mark that teardown has begun (prevents new clients)."""
         self._shutting_down = True
 
-    def get_client(self, config: PgConfig) -> PgTestClient:
+    def get_client(self, config: PgConfig, default_role: str | None = None) -> PgTestClient:
         """
         Get a new test client for the given configuration.
 
         Args:
             config: PostgreSQL configuration for the client
+            default_role: Role the client falls back to in clear_context()
 
         Returns:
             A new PgTestClient instance
@@ -111,7 +112,7 @@ class PgTestConnector:
         if self._shutting_down:
             raise RuntimeError("PgTestConnector is shutting down; no new clients allowed")
 
-        client = PgTestClient(config)
+        client = PgTestClient(config, default_role=default_role)
         client.connect()
         self._clients.add(client)
 

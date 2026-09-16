@@ -31,7 +31,8 @@ def pets_db():
                     name TEXT NOT NULL,
                     species TEXT NOT NULL,
                     age INTEGER
-                )
+                );
+                GRANT ALL ON pets, pets_id_seq TO anonymous;
             """))
         ]
     )

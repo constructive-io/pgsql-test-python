@@ -115,11 +115,13 @@ class TestPgTestClient:
 
     def test_transaction_rollback(self, db_connection):
         """Test that before_each/after_each provides transaction isolation."""
+        pg = db_connection.pg
         db = db_connection.db
 
-        # Create a table
-        db.query("CREATE TABLE rollback_test (id INT)")
-        db.connection.commit()
+        # Create a table as superuser and expose it to the app role
+        pg.query("CREATE TABLE rollback_test (id INT)")
+        pg.query("GRANT ALL ON rollback_test TO anonymous")
+        pg.commit()
 
         # Start test isolation
         db.before_each()
@@ -162,7 +164,7 @@ class TestSqlFileSeeding:
         )
         try:
             # Verify tables were created
-            result = conn.db.query(
+            result = conn.pg.query(
                 """
                 SELECT table_name
                 FROM information_schema.tables
@@ -176,12 +178,12 @@ class TestSqlFileSeeding:
             assert "users" in tables
 
             # Verify data was inserted
-            users = conn.db.many("SELECT * FROM users ORDER BY id")
+            users = conn.pg.many("SELECT * FROM users ORDER BY id")
             assert len(users) == 2
             assert users[0]["name"] == "Alice"
             assert users[1]["name"] == "Bob"
 
-            posts = conn.db.many("SELECT * FROM posts ORDER BY id")
+            posts = conn.pg.many("SELECT * FROM posts ORDER BY id")
             assert len(posts) == 3
         finally:
             conn.teardown()
@@ -214,7 +216,7 @@ class TestFnSeeding:
             seed_adapters=[seed.fn(my_seed)],
         )
         try:
-            result = conn.db.one("SELECT value FROM fn_test")
+            result = conn.pg.one("SELECT value FROM fn_test")
             assert result["value"] == "seeded"
         finally:
             conn.teardown()
@@ -252,7 +254,7 @@ class TestComposeSeeding:
         try:
             assert execution_order == ["first", "second", "third"]
 
-            result = conn.db.many("SELECT step FROM compose_test ORDER BY step")
+            result = conn.pg.many("SELECT step FROM compose_test ORDER BY step")
             assert [r["step"] for r in result] == [1, 2]
         finally:
             conn.teardown()
