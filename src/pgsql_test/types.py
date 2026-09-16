@@ -14,6 +14,22 @@ class PgConfig(TypedDict, total=False):
     password: str
 
 
+class AppConnection(TypedDict, total=False):
+    """Credentials for the app-level (non-superuser) `db` client."""
+
+    user: str  # Login role used by the `db` client (default: app_user)
+    password: str  # Password for that role (default: app_password)
+    role: str  # Default role applied via set_context() (default: anonymous)
+
+
+class RoleMapping(TypedDict, total=False):
+    """Names of the NOLOGIN roles the app user is granted membership in."""
+
+    anonymous: str
+    authenticated: str
+    administrator: str
+
+
 class ConnectionOptions(TypedDict, total=False):
     """Options for database connections."""
 
@@ -21,6 +37,21 @@ class ConnectionOptions(TypedDict, total=False):
     root_db: str  # Root database for admin operations (default: postgres)
     extensions: list[str]  # Extensions to install
     template: str | None  # Template database to use
+    connection: AppConnection  # Credentials/default role for the `db` client
+    roles: RoleMapping  # Role names granted to the app user
+
+
+DEFAULT_APP_CONNECTION: AppConnection = {
+    "user": "app_user",
+    "password": "app_password",
+    "role": "anonymous",
+}
+
+DEFAULT_ROLES: RoleMapping = {
+    "anonymous": "anonymous",
+    "authenticated": "authenticated",
+    "administrator": "administrator",
+}
 
 
 @dataclass

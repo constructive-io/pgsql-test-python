@@ -239,6 +239,66 @@ class DbAdmin:
             )
         logger.info(f"Created role: {role_name}")
 
+    def role_exists(self, role_name: str) -> bool:
+        """Check whether a role exists."""
+        conn = self._get_admin_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role_name,))
+            return cur.fetchone() is not None
+
+    def grant_role(self, role_name: str, member: str) -> None:
+        """Grant membership in `role_name` to `member` (idempotent)."""
+        conn = self._get_admin_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 1
+                FROM pg_auth_members am
+                JOIN pg_roles r ON am.roleid = r.oid
+                JOIN pg_roles m ON am.member = m.oid
+                WHERE r.rolname = %s AND m.rolname = %s
+                """,
+                (role_name, member),
+            )
+            if cur.fetchone() is not None:
+                return
+            cur.execute(
+                sql.SQL("GRANT {} TO {}").format(
+                    sql.Identifier(role_name),
+                    sql.Identifier(member),
+                )
+            )
+        logger.debug(f"Granted {role_name} to {member}")
+
+    def create_user_role(self, user: str, password: str, roles: list[str]) -> None:
+        """
+        Create the app-level LOGIN user used by the `db` client and grant it
+        membership in the given NOLOGIN roles (created if missing).
+
+        Mirrors pgsql-test (TS) `DbAdmin.createUserRole`. Granting `administrator`
+        is for the test harness only - never do this for a production app user.
+        """
+        conn = self._get_admin_connection()
+        with conn.cursor() as cur:
+            for role in roles:
+                if self.role_exists(role):
+                    continue
+                try:
+                    cur.execute(sql.SQL("CREATE ROLE {} NOLOGIN").format(sql.Identifier(role)))
+                except psycopg2.errors.DuplicateObject:
+                    pass
+            if not self.role_exists(user):
+                try:
+                    cur.execute(
+                        sql.SQL("CREATE ROLE {} LOGIN PASSWORD %s").format(sql.Identifier(user)),
+                        (password,),
+                    )
+                except psycopg2.errors.DuplicateObject:
+                    pass
+        for role in roles:
+            self.grant_role(role, user)
+        logger.info(f"Created user role {user} with grants: {roles}")
+
     def grant_connect(self, role_name: str, database: str) -> None:
         """
         Grant CONNECT privilege on a database to a role.

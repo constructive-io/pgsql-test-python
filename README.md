@@ -24,7 +24,7 @@ The Python counterpart to [`pgsql-test`](https://www.npmjs.com/package/pgsql-tes
 
 * **Instant test DBs** — each one seeded, isolated, and UUID-named
 * **Per-test rollback** — every test runs in its own transaction with savepoint-based rollback via `before_each()`/`after_each()`
-* **RLS-friendly** — test with role-based auth via `set_context()`
+* **RLS-friendly** — `db` is a real non-superuser connection (`app_user`); switch roles and JWT claims via `set_context()`
 * **pgpm integration** — run database migrations using [pgpm](https://pgpm.io) (PostgreSQL Package Manager)
 * **Flexible seeding** — run `.sql` files, programmatic seeds, pgpm modules, or combine multiple strategies
 * **Auto teardown** — no residue, no reboots, just clean exits
@@ -103,6 +103,10 @@ def test_my_function(db):
     result = db.one("SELECT my_schema.my_function() as result")
     assert result['result'] == expected_value
 ```
+
+> `db` connects as the non-superuser `app_user` (see [`pg` vs `db`](#pg-vs-db)). Your migrations
+> must `GRANT USAGE`/`EXECUTE` to `anonymous`/`authenticated`/`administrator` for `db` to reach
+> them — or use `conn.pg` when you only want to assert that the deploy happened.
 
 ### pgpm with Dependencies
 
@@ -220,22 +224,68 @@ Without per-test rollback, tests can interfere with each other:
 
 With `before_each()`/`after_each()`, each test is completely isolated, making your test suite reliable and deterministic.
 
-## RLS Testing
+## `pg` vs `db`
 
-Test Row Level Security policies by switching contexts:
+`get_connections()` returns two **different** clients, mirroring the TypeScript `pgsql-test`:
+
+| Client | Connects as | Use it for |
+|--------|-------------|------------|
+| `pg`   | the superuser from `PGUSER` | DDL, seeding, grants, asserting ground truth (bypasses RLS) |
+| `db`   | `app_user` (non-superuser), default role `anonymous` | the code under test — grants and RLS policies are enforced |
+
+On every `get_connections()` call, pgsql-test creates the `app_user` LOGIN role (if missing),
+grants it membership in the `anonymous`, `authenticated` and `administrator` roles, grants it
+`CONNECT` on the test database, and opens `db` with those credentials. Every query on `db` runs
+after `SET LOCAL ROLE <role>` (default `anonymous`), so tables created by `pg` are invisible to
+`db` until you `GRANT` access — exactly as they would be in production.
+
+Override the credentials/roles via `connection_options`:
 
 ```python
-def test_rls_policy(db):
+conn = get_connections(connection_options={
+    'connection': {'user': 'app_user', 'password': 'app_password', 'role': 'anonymous'},
+    'roles': {'anonymous': 'anonymous', 'authenticated': 'authenticated', 'administrator': 'administrator'},
+})
+```
+
+## RLS Testing
+
+Seed with `pg`, then exercise policies with `db`:
+
+```python
+@pytest.fixture(scope='module')
+def conn():
+    c = get_connections()
+    c.pg.query("""
+        CREATE TABLE documents (id SERIAL PRIMARY KEY, owner_id TEXT, title TEXT);
+        ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+        GRANT SELECT ON documents TO authenticated;
+        CREATE POLICY owner_only ON documents FOR SELECT TO authenticated
+            USING (owner_id = current_setting('jwt.claims.user_id', true));
+    """)
+    c.pg.commit()
+    yield c
+    c.teardown()
+
+def test_rls_policy(conn):
+    db = conn.db
     db.before_each()
-    
-    # Set the user context
-    db.set_context({'app.user_id': '123'})
-    
-    # Now queries will be filtered by RLS policies
-    result = db.many('SELECT * FROM user_data')
-    
+
+    # anonymous (the default role) has no grant at all
+    with pytest.raises(psycopg2.errors.InsufficientPrivilege):
+        db.query('SELECT * FROM documents')
+
+    # authenticated sees only its own rows
+    db.set_context({'role': 'authenticated', 'jwt.claims.user_id': '123'})
+    rows = db.many_or_none('SELECT * FROM documents')
+
+    db.clear_context()  # back to anonymous, claims nulled
     db.after_each()
 ```
+
+`set_context()` turns `role` into `SET LOCAL ROLE` and every other key into
+`set_config(key, value, true)`. Both are transaction-local and are re-applied before every
+query, so they persist for the whole `before_each()`/`after_each()` window.
 
 ## Seeding Strategies
 
@@ -300,8 +350,8 @@ conn = get_connections(
 Creates a new isolated test database and returns connection objects.
 
 Returns a `ConnectionResult` with:
-- `pg`: PgTestClient connected as superuser
-- `db`: PgTestClient for testing (same as pg for now)
+- `pg`: PgTestClient connected as the superuser (bypasses RLS; use for setup/assertions)
+- `db`: PgTestClient connected as `app_user` with default role `anonymous` (RLS enforced)
 - `admin`: DbAdmin for database management
 - `manager`: PgTestConnector managing connections
 - `teardown()`: Function to clean up
@@ -316,7 +366,9 @@ Returns a `ConnectionResult` with:
 - `execute(sql, params?)`: Execute and return affected row count
 - `before_each()`: Start test isolation (transaction + savepoint)
 - `after_each()`: End test isolation (rollback)
-- `set_context(dict)`: Set session variables for RLS testing
+- `set_context(dict)`: Set `role` (`SET LOCAL ROLE`) and GUCs (`set_config(..., true)`) for RLS testing
+- `get_context()`: Return the current context dict
+- `clear_context()`: Null every GUC and restore the default role
 
 ## GitHub Actions Example
 
@@ -356,7 +408,7 @@ jobs:
       
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       
       - name: Install pgpm
         run: npm install -g pgpm

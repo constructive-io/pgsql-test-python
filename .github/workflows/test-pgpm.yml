@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PGPM_VERSION: '2.7.9'
+  PGPM_VERSION: '5.30.6'
 
 jobs:
   test-pgpm:
@@ -30,7 +30,7 @@ jobs:
 
     services:
       pg_db:
-        image: ghcr.io/constructive-io/docker/postgres-plus:17
+        image: ghcr.io/constructive-io/docker/postgres-plus:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
@@ -49,7 +49,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Cache pgpm CLI
         uses: actions/cache@v4
